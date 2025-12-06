@@ -1,0 +1,35 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+*.out
+
+# Code coverage profiles and other test artifacts
+coverage.*
+*.coverprofile
+profile.cov
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Environment files
+.env
+.env.*
+
+# Editor/IDE-specific files (optional, can be added to a global gitignore instead)
+.idea/
+.vscode/
+*.swp
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
