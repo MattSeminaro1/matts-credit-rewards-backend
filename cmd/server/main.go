@@ -11,11 +11,24 @@ import (
 )
 
 func main() {
-	// Load config from .env
-	cfg := config.LoadConfig("C:/Matts-Credit-Rewards-App/backend/.env")
+	// Load Plaid config from .env
+	plaidCfg := config.LoadPlaidConfig("C:/Matts-Credit-Rewards-App/backend/.env")
 
+	// Initialize Plaid client
+	plaidClient := plaidCfg.InitializePlaidClient()
+	if plaidClient != nil {
+		log.Println("Successfully loaded Plaid client for %s environment.\n", plaidCfg.Env)
+		// Now you can use 'plaidClient' to make API calls:
+		// ctx := context.Background()
+		// client.PlaidApi.LinkTokenCreate(ctx)...
+	} else {
+		log.Fatal("Failed to initialize Plaid client.")
+	}
+
+	// Load Postgres config from .env
+	postgresCfg := config.LoadPostgresConfig("C:/Matts-Credit-Rewards-App/backend/.env")
 	// Initialize Postgres connection
-	if err := db.Init(cfg.DSN()); err != nil {
+	if err := db.Init(postgresCfg.DSN()); err != nil {
 		log.Fatalf("Failed to connect to Postgres: %v", err)
 	}
 

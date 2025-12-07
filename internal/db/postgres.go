@@ -16,3 +16,7 @@ func Init(dsn string) error {
 	}
 	return DB.Ping()
 }
+
+func GetDB() *sql.DB {
+	return DB
+}
