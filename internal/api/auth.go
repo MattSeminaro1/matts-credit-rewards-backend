@@ -93,6 +93,7 @@ func LoginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Logged in successfully",
 		"user": gin.H{
+			"uid":   user.ID,
 			"name":  user.Name,
 			"email": user.Email,
 		},
