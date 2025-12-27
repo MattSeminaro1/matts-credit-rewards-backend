@@ -25,9 +25,9 @@ func main() {
 		log.Fatalf("Failed to connect to Postgres: %v", err)
 	}
 
-	// Initialize LinkServiceImpl & Handler
-	linkService := service.NewLinkServiceImpl(plaidClient)
-	var plaidSvc service.PlaidService = linkService
+	// Initialize TokenServiceImpl & Handler
+	tokenService := service.NewTokenServiceImpl(plaidClient)
+	var plaidSvc service.PlaidService = tokenService
 
 	plaidHandler := &api.PlaidHandler{PlaidService: plaidSvc}
 
@@ -45,8 +45,8 @@ func main() {
 	// Routes
 	r.POST("/signup", api.SignupHandler)
 	r.POST("/login", api.LoginHandler)
-	r.POST("/api/create_link_token", plaidHandler.CreateLinkTokenHandler)
-	r.POST("/api/exchange_public_token", plaidHandler.ExchangePublicTokenHandler)
+	r.POST("/create_link_token", plaidHandler.CreateLinkTokenHandler)
+	r.POST("/exchange_public_token", plaidHandler.ExchangePublicTokenHandler)
 
 	// Start server
 	log.Println("Server running on :8080")

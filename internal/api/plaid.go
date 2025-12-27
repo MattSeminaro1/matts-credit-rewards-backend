@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"matts-credit-rewards-app/backend/internal/models"
@@ -20,8 +21,9 @@ func (h *PlaidHandler) CreateLinkTokenHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-
+	log.Printf("Creating link token for user: %s", req.UserID)
 	linkToken, err := h.PlaidService.CreateLinkToken(req.UserID)
+	log.Printf("Link token creation result: %s, error: %v", linkToken, err)
 	if err != nil {
 		if err == service.ErrUserNotFound {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})

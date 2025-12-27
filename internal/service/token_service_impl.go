@@ -11,8 +11,8 @@ import (
 
 var ErrUserNotFound = errors.New("user not found")
 
-// LinkServiceImpl is the concrete implementation of PlaidService
-type LinkServiceImpl struct {
+// TokenServiceImpl is the concrete implementation of PlaidService
+type TokenServiceImpl struct {
 	PlaidClient   *plaid.APIClient
 	AppName       string
 	Language      string
@@ -20,9 +20,9 @@ type LinkServiceImpl struct {
 	Customization string
 }
 
-// NewLinkServiceImpl creates a new LinkServiceImpl
-func NewLinkServiceImpl(client *plaid.APIClient) *LinkServiceImpl {
-	return &LinkServiceImpl{
+// NewTokenServiceImpl creates a new TokenServiceImpl
+func NewTokenServiceImpl(client *plaid.APIClient) *TokenServiceImpl {
+	return &TokenServiceImpl{
 		PlaidClient:   client,
 		AppName:       "Matts Credit Rewards",
 		Language:      "en",
@@ -32,7 +32,7 @@ func NewLinkServiceImpl(client *plaid.APIClient) *LinkServiceImpl {
 }
 
 // CreateLinkToken implements PlaidService
-func (s *LinkServiceImpl) CreateLinkToken(userID string) (string, error) {
+func (s *TokenServiceImpl) CreateLinkToken(userID string) (string, error) {
 	exists, err := repository.UserExists(userID)
 	if err != nil {
 		return "", err
@@ -62,7 +62,7 @@ func (s *LinkServiceImpl) CreateLinkToken(userID string) (string, error) {
 }
 
 // ExchangePublicToken implements PlaidService
-func (s *LinkServiceImpl) ExchangePublicToken(publicToken string) (string, error) {
+func (s *TokenServiceImpl) ExchangePublicToken(publicToken string) (string, error) {
 	req := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 	resp, _, err := s.PlaidClient.PlaidApi.ItemPublicTokenExchange(context.Background()).
 		ItemPublicTokenExchangeRequest(*req).
