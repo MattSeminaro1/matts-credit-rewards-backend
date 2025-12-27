@@ -63,14 +63,14 @@ func (s *TokenServiceImpl) CreateLinkToken(userID string) (string, error) {
 }
 
 // ExchangePublicToken implements PlaidService
-func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string) ([]plaid.AccountBase, error) {
+func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string) error {
 	// 1. Exchange public token
 	req := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 	resp, _, err := s.PlaidClient.PlaidApi.ItemPublicTokenExchange(context.Background()).
 		ItemPublicTokenExchangeRequest(*req).
 		Execute()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	accessToken := resp.GetAccessToken()
@@ -85,7 +85,7 @@ func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string
 		ItemGetRequest(*plaid.NewItemGetRequest(accessToken)).
 		Execute()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	log.Printf("Fetched item info: %+v", itemResp)
@@ -111,7 +111,7 @@ func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string
 		institutionName,
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	log.Printf("Upserted Plaid Item with ID: %s", plaidItemID)
 
@@ -121,15 +121,15 @@ func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string
 		AccountsGetRequest(*plaid.NewAccountsGetRequest(accessToken)).
 		Execute()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	log.Printf("Fetched accounts: %+v", accResp.GetAccounts())
 	// persist accounts
 	if err := repository.UpsertAccounts(plaidItemID, accResp.GetAccounts()); err != nil {
-		return nil, err
+		return err
 	}
 	log.Printf("Upserted accounts for Plaid Item ID: %s", plaidItemID)
 
 	// return accounts to frontend
-	return accResp.GetAccounts(), nil
+	return nil
 }

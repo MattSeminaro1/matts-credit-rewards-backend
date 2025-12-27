@@ -44,13 +44,12 @@ func (h *PlaidHandler) ExchangePublicTokenHandler(c *gin.Context) {
 		return
 	}
 
-	// Exchange public token and get accounts
-	accounts, err := h.PlaidService.ExchangePublicToken(req.UserID, req.PublicToken)
+	// Exchange public token and store new account
+	err := h.PlaidService.ExchangePublicToken(req.UserID, req.PublicToken)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to exchange public token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to link account"})
 		return
 	}
 
-	// Return accounts to frontend
-	c.JSON(http.StatusOK, gin.H{"accounts": accounts})
+	c.JSON(http.StatusOK, gin.H{"message": "account successfully added"})
 }
