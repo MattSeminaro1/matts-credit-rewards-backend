@@ -9,9 +9,10 @@ type CreateLinkTokenResponse struct {
 }
 
 type ExchangePublicTokenRequest struct {
+	UserID      string `json:"user_id"`
 	PublicToken string `json:"public_token"`
 }
 
-type ExchangePublicTokenResponse struct {
-	AccessToken string `json:"access_token"`
-}
+//type ExchangePublicTokenResponse struct {
+//	AccessToken string `json:"access_token"`
+//}

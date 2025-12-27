@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 
 	"matts-credit-rewards-app/backend/internal/repository"
 
@@ -26,7 +27,7 @@ func NewTokenServiceImpl(client *plaid.APIClient) *TokenServiceImpl {
 		PlaidClient:   client,
 		AppName:       "Matts Credit Rewards",
 		Language:      "en",
-		Products:      []plaid.Products{plaid.PRODUCTS_AUTH},
+		Products:      []plaid.Products{plaid.PRODUCTS_AUTH, plaid.PRODUCTS_TRANSACTIONS},
 		Customization: "default",
 	}
 }
@@ -62,13 +63,73 @@ func (s *TokenServiceImpl) CreateLinkToken(userID string) (string, error) {
 }
 
 // ExchangePublicToken implements PlaidService
-func (s *TokenServiceImpl) ExchangePublicToken(publicToken string) (string, error) {
+func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string) ([]plaid.AccountBase, error) {
+	// 1. Exchange public token
 	req := plaid.NewItemPublicTokenExchangeRequest(publicToken)
 	resp, _, err := s.PlaidClient.PlaidApi.ItemPublicTokenExchange(context.Background()).
 		ItemPublicTokenExchangeRequest(*req).
 		Execute()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return resp.GetAccessToken(), nil
+
+	accessToken := resp.GetAccessToken()
+	itemID := resp.GetItemId()
+
+	log.Printf("Exchanged public token. AccessToken: %s, ItemID: %s", accessToken, itemID)
+
+	// 2. Get item info
+	log.Printf("Fetching item info for AccessToken: %s", accessToken)
+	itemResp, _, err := s.PlaidClient.PlaidApi.
+		ItemGet(context.Background()).
+		ItemGetRequest(*plaid.NewItemGetRequest(accessToken)).
+		Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Fetched item info: %+v", itemResp)
+
+	item := itemResp.GetItem()
+
+	institutionID := itemResp.Item.GetInstitutionId()
+
+	institutionName := ""
+	if v, ok := item.AdditionalProperties["institution_name"]; ok {
+		if s, ok := v.(string); ok {
+			institutionName = s
+		}
+	}
+
+	log.Printf("Institution ID: %s, Name: %s", institutionID, institutionName)
+	// 3. Persist plaid_items
+	plaidItemID, err := repository.UpsertPlaidItem(
+		userID,
+		itemID,
+		accessToken,
+		institutionID,
+		institutionName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Upserted Plaid Item with ID: %s", plaidItemID)
+
+	// 4. Fetch accounts
+	accResp, _, err := s.PlaidClient.PlaidApi.
+		AccountsGet(context.Background()).
+		AccountsGetRequest(*plaid.NewAccountsGetRequest(accessToken)).
+		Execute()
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Fetched accounts: %+v", accResp.GetAccounts())
+	// persist accounts
+	if err := repository.UpsertAccounts(plaidItemID, accResp.GetAccounts()); err != nil {
+		return nil, err
+	}
+	log.Printf("Upserted accounts for Plaid Item ID: %s", plaidItemID)
+
+	// return accounts to frontend
+	return accResp.GetAccounts(), nil
 }
