@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"matts-credit-rewards-app/backend/internal/models"
+	"matts-credit-rewards-app/backend/internal/repository"
 	"matts-credit-rewards-app/backend/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -52,4 +53,31 @@ func (h *PlaidHandler) ExchangePublicTokenHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "account successfully added"})
+}
+
+// internal/api/plaid_handler.go
+func (h *PlaidHandler) GetAccountsHandler(c *gin.Context) {
+	userID := c.Query("userId")
+	log.Printf("userID: %s", userID)
+
+	accountType := c.Query("type")
+	log.Printf("accountType: %s", accountType)
+
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
+		return
+	}
+
+	var acctTypePtr *string
+	if accountType != "" {
+		acctTypePtr = &accountType
+	}
+
+	accounts, err := repository.GetAccountsByUserAndType(userID, acctTypePtr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch accounts"})
+		return
+	}
+
+	c.JSON(http.StatusOK, accounts)
 }

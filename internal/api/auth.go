@@ -6,21 +6,11 @@ import (
 	"log"
 	"net/http"
 
+	"matts-credit-rewards-app/backend/internal/models"
 	"matts-credit-rewards-app/backend/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
-
-type SignupRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
 
 // SignupHandler handles user signup
 func SignupHandler(c *gin.Context) {
@@ -37,7 +27,7 @@ func SignupHandler(c *gin.Context) {
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	// Parse JSON
-	var req SignupRequest
+	var req models.SignupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Println("BindJSON error:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
@@ -72,7 +62,7 @@ func LoginHandler(c *gin.Context) {
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	// Parse JSON
-	var req LoginRequest
+	var req models.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Println("BindJSON error:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})

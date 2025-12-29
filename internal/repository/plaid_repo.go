@@ -72,3 +72,51 @@ func UpsertAccounts(accounts []models.Account) error {
 
 	return tx.Commit()
 }
+
+// repository/accounts.go
+func GetAccountsByUserAndType(userID string, accountType *string) ([]models.Account, error) {
+	query := `
+		SELECT 
+			item_id, plaid_account_id, name, official_name, mask, type, subtype, current_balance, available_balance, currency
+		FROM rewards.accounts
+		WHERE item_id IN (
+			SELECT id FROM rewards.plaid_items WHERE user_id = $1
+		)
+	`
+
+	args := []interface{}{userID}
+
+	if accountType != nil {
+		query += " AND type = $2"
+		args = append(args, *accountType)
+	}
+
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var accounts []models.Account
+	for rows.Next() {
+		var a models.Account
+		err := rows.Scan(
+			&a.ItemID,
+			&a.PlaidAccountID,
+			&a.Name,
+			&a.OfficialName,
+			&a.Mask,
+			&a.Type,
+			&a.Subtype,
+			&a.CurrentBalance,
+			&a.AvailableBalance,
+			&a.Currency,
+		)
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, a)
+	}
+
+	return accounts, nil
+}
