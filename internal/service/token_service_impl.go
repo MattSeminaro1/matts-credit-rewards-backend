@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 
+	"matts-credit-rewards-app/backend/internal/models"
 	"matts-credit-rewards-app/backend/internal/repository"
 
 	"github.com/plaid/plaid-go/plaid"
@@ -124,11 +125,44 @@ func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string
 		return err
 	}
 	log.Printf("Fetched accounts: %+v", accResp.GetAccounts())
+
+	accounts := make([]models.Account, 0, len(accResp.GetAccounts()))
+
+	for _, a := range accResp.GetAccounts() {
+		acc := models.Account{
+			ItemID:         plaidItemID,
+			PlaidAccountID: a.AccountId,
+			Name:           a.Name,
+			Type:           string(a.Type),
+		}
+
+		if a.OfficialName.IsSet() {
+			acc.OfficialName = a.OfficialName.Get()
+		}
+		if a.Mask.IsSet() {
+			acc.Mask = a.Mask.Get()
+		}
+		if a.Subtype.IsSet() && a.Subtype.Get() != nil {
+			subtypeValue := string(*a.Subtype.Get())
+			acc.Subtype = &subtypeValue
+		}
+		if a.Balances.Current.IsSet() && a.Balances.Current.Get() != nil {
+			acc.CurrentBalance = a.Balances.Current.Get()
+		}
+		if a.Balances.Available.IsSet() && a.Balances.Available.Get() != nil {
+			acc.AvailableBalance = a.Balances.Available.Get()
+		}
+		if a.Balances.IsoCurrencyCode.IsSet() {
+			acc.Currency = a.Balances.IsoCurrencyCode.Get()
+		}
+
+		accounts = append(accounts, acc)
+	}
+
 	// persist accounts
-	if err := repository.UpsertAccounts(plaidItemID, accResp.GetAccounts()); err != nil {
+	if err := repository.UpsertAccounts(accounts); err != nil {
 		return err
 	}
-	log.Printf("Upserted accounts for Plaid Item ID: %s", plaidItemID)
 
 	// return accounts to frontend
 	return nil

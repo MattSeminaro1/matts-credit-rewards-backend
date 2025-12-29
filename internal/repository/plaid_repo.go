@@ -2,8 +2,7 @@ package repository
 
 import (
 	"matts-credit-rewards-app/backend/internal/db"
-
-	"github.com/plaid/plaid-go/plaid"
+	"matts-credit-rewards-app/backend/internal/models"
 )
 
 func UpsertPlaidItem(
@@ -24,7 +23,11 @@ func UpsertPlaidItem(
 	return id, err
 }
 
-func UpsertAccounts(itemID string, accounts []plaid.AccountBase) error {
+func UpsertAccounts(accounts []models.Account) error {
+	if len(accounts) == 0 {
+		return nil
+	}
+
 	tx, err := db.DB.Begin()
 	if err != nil {
 		return err
@@ -43,26 +46,24 @@ func UpsertAccounts(itemID string, accounts []plaid.AccountBase) error {
 				subtype,
 				current_balance,
 				available_balance,
-				currency,
-				created_at,
-				updated_at
-			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW(),NOW())
+				currency
+			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 			ON CONFLICT (plaid_account_id)
 			DO UPDATE SET
 				current_balance = EXCLUDED.current_balance,
 				available_balance = EXCLUDED.available_balance,
 				updated_at = NOW()
 		`,
-			itemID,
-			a.AccountId,
+			a.ItemID,
+			a.PlaidAccountID,
 			a.Name,
 			a.OfficialName,
 			a.Mask,
 			a.Type,
 			a.Subtype,
-			a.Balances.Current,
-			a.Balances.Available,
-			a.Balances.IsoCurrencyCode,
+			a.CurrentBalance,
+			a.AvailableBalance,
+			a.Currency,
 		)
 		if err != nil {
 			return err
