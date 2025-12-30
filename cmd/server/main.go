@@ -48,6 +48,7 @@ func main() {
 	r.POST("/create_link_token", plaidHandler.CreateLinkTokenHandler)
 	r.POST("/exchange_public_token", plaidHandler.ExchangePublicTokenHandler)
 	r.GET("/accounts", plaidHandler.GetAccountsHandler)
+	r.GET("/transactions", plaidHandler.GetTransactionsHandler)
 
 	// Start server
 	log.Println("Server running on :8080")

@@ -15,7 +15,7 @@ type PlaidHandler struct {
 	PlaidService service.PlaidService
 }
 
-// POST /api/create_link_token
+// POST /create_link_token
 func (h *PlaidHandler) CreateLinkTokenHandler(c *gin.Context) {
 	var req models.CreateLinkTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -37,7 +37,7 @@ func (h *PlaidHandler) CreateLinkTokenHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, models.CreateLinkTokenResponse{LinkToken: linkToken})
 }
 
-// POST /api/exchange_public_token
+// POST /exchange_public_token
 func (h *PlaidHandler) ExchangePublicTokenHandler(c *gin.Context) {
 	var req models.ExchangePublicTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -55,7 +55,7 @@ func (h *PlaidHandler) ExchangePublicTokenHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "account successfully added"})
 }
 
-// internal/api/plaid_handler.go
+// GET /accounts
 func (h *PlaidHandler) GetAccountsHandler(c *gin.Context) {
 	userID := c.Query("userId")
 	log.Printf("userID: %s", userID)
@@ -74,6 +74,33 @@ func (h *PlaidHandler) GetAccountsHandler(c *gin.Context) {
 	}
 
 	accounts, err := repository.GetAccountsByUserAndType(userID, acctTypePtr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch accounts"})
+		return
+	}
+
+	c.JSON(http.StatusOK, accounts)
+}
+
+// GET /transactions
+func (h *PlaidHandler) GetTransactionsHandler(c *gin.Context) {
+	userID := c.Query("userId")
+	log.Printf("userID: %s", userID)
+
+	accountId := c.Query("accountId")
+	log.Printf("accountId: %s", accountId)
+
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
+		return
+	}
+
+	var accountIdPtr *string
+	if accountId != "" {
+		accountIdPtr = &accountId
+	}
+
+	accounts, err := repository.GetAccountsByUserAndType(userID, accountIdPtr)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch accounts"})
 		return

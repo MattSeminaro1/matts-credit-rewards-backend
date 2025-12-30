@@ -5,6 +5,7 @@ import (
 	"matts-credit-rewards-app/backend/internal/models"
 )
 
+// Inster Plaid Items
 func UpsertPlaidItem(
 	userID, plaidItemID, accessToken, institutionID, institutionName string,
 ) (string, error) {
@@ -23,6 +24,7 @@ func UpsertPlaidItem(
 	return id, err
 }
 
+// Inster Plaid Accounts
 func UpsertAccounts(accounts []models.Account) error {
 	if len(accounts) == 0 {
 		return nil
@@ -73,7 +75,7 @@ func UpsertAccounts(accounts []models.Account) error {
 	return tx.Commit()
 }
 
-// repository/accounts.go
+// Get accounts by user ID and optional account type
 func GetAccountsByUserAndType(userID string, accountType *string) ([]models.Account, error) {
 	query := `
 		SELECT 
@@ -119,4 +121,76 @@ func GetAccountsByUserAndType(userID string, accountType *string) ([]models.Acco
 	}
 
 	return accounts, nil
+}
+
+// Get transactions by user ID and optional account ID
+func GetTransactionsByUserAndAccount(
+	userID string,
+	accountID *string,
+) ([]models.Transaction, error) {
+
+	query := `
+		SELECT
+			t.id,
+			t.account_id,
+			t.plaid_transaction_id,
+			t.name,
+			t.amount,
+			t.iso_currency_code,
+			t.category,
+			t.date,
+			t.pending,
+			t.created_at,
+			t.updated_at
+		FROM transactions t
+		JOIN accounts a ON a.id = t.account_id
+		JOIN plaid_items pi ON pi.id = a.item_id
+		WHERE pi.user_id = $1
+	`
+
+	args := []interface{}{userID}
+
+	if accountID != nil {
+		query += " AND a.id = $2"
+		args = append(args, *accountID)
+	}
+
+	query += " ORDER BY t.date DESC"
+
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []models.Transaction
+
+	for rows.Next() {
+		var t models.Transaction
+
+		err := rows.Scan(
+			&t.ID,
+			&t.AccountID,
+			&t.PlaidTransactionID,
+			&t.Name,
+			&t.Amount,
+			&t.IsoCurrencyCode,
+			&t.Category,
+			&t.Date,
+			&t.Pending,
+			&t.CreatedAt,
+			&t.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, t)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return transactions, nil
 }
