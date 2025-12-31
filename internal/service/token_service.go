@@ -1,7 +1,7 @@
 package service
 
-// PlaidService defines the interface for Plaid operations
-type PlaidService interface {
+// PlaidTokenService defines the interface for Plaid operations
+type PlaidTokenService interface {
 	CreateLinkToken(userID string) (string, error)
 	ExchangePublicToken(userID string, publicToken string) error
 }

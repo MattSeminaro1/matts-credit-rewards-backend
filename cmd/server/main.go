@@ -27,9 +27,9 @@ func main() {
 
 	// Initialize TokenServiceImpl & Handler
 	tokenService := service.NewTokenServiceImpl(plaidClient)
-	var plaidSvc service.PlaidService = tokenService
+	var plaidSvc service.PlaidTokenService = tokenService
 
-	plaidHandler := &api.PlaidHandler{PlaidService: plaidSvc}
+	plaidTokenHandler := &api.PlaidTokenHandler{PlaidService: plaidSvc}
 
 	// Create Gin router
 	r := gin.Default()
@@ -45,10 +45,10 @@ func main() {
 	// Routes
 	r.POST("/signup", api.SignupHandler)
 	r.POST("/login", api.LoginHandler)
-	r.POST("/create_link_token", plaidHandler.CreateLinkTokenHandler)
-	r.POST("/exchange_public_token", plaidHandler.ExchangePublicTokenHandler)
-	r.GET("/accounts", plaidHandler.GetAccountsHandler)
-	r.GET("/transactions", plaidHandler.GetTransactionsHandler)
+	r.POST("/create_link_token", plaidTokenHandler.CreateLinkTokenHandler)
+	r.POST("/exchange_public_token", plaidTokenHandler.ExchangePublicTokenHandler)
+	r.GET("/accounts", api.GetAccountsHandler)
+	r.GET("/transactions", api.GetTransactionsHandler)
 
 	// Start server
 	log.Println("Server running on :8080")
