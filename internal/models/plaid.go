@@ -33,8 +33,8 @@ type Transaction struct {
 	AccountID          string    `json:"accountId"`          // FK → accounts.id
 	PlaidTransactionID string    `json:"plaidTransactionId"` // unique per transaction
 	Name               string    `json:"name"`
-	Amount             float64   `json:"amount"`
-	IsoCurrencyCode    string    `json:"isoCurrencyCode"`
+	Amount             float32   `json:"amount"`
+	IsoCurrencyCode    *string   `json:"isoCurrencyCode"`
 	Category           string    `json:"category"`
 	Date               time.Time `json:"date"`
 	Pending            bool      `json:"pending"`

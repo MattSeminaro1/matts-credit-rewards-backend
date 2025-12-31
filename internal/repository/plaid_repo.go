@@ -194,3 +194,84 @@ func GetTransactionsByUserAndAccount(
 
 	return transactions, nil
 }
+
+// Inster Plaid Transactions
+func GetAccountIDByPlaidAccountID(plaidAccountID string) (string, error) {
+	var accountID string
+
+	err := db.DB.QueryRow(`
+		SELECT id
+		FROM rewards.accounts
+		WHERE plaid_account_id = $1
+	`, plaidAccountID).Scan(&accountID)
+
+	return accountID, err
+}
+
+func UpsertTransaction(t models.Transaction) error {
+	_, err := db.DB.Exec(`
+		INSERT INTO rewards.transactions (
+			account_id,
+			plaid_transaction_id,
+			name,
+			amount,
+			iso_currency_code,
+			category,
+			date,
+			pending
+		)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+		ON CONFLICT (plaid_transaction_id)
+		DO UPDATE SET
+			name = EXCLUDED.name,
+			amount = EXCLUDED.amount,
+			iso_currency_code = EXCLUDED.iso_currency_code,
+			category = EXCLUDED.category,
+			date = EXCLUDED.date,
+			pending = EXCLUDED.pending,
+			updated_at = NOW()
+	`,
+		t.AccountID,
+		t.PlaidTransactionID,
+		t.Name,
+		t.Amount,
+		t.IsoCurrencyCode,
+		t.Category,
+		t.Date,
+		t.Pending,
+	)
+
+	return err
+}
+
+func DeleteTransactionByPlaidID(plaidTransactionID *string) error {
+	_, err := db.DB.Exec(`
+		DELETE FROM rewards.transactions
+		WHERE plaid_transaction_id = $1
+	`, plaidTransactionID)
+
+	return err
+}
+
+func GetTransactionsCursor(itemID string) (*string, error) {
+	var cursor *string
+
+	err := db.DB.QueryRow(`
+		SELECT transactions_cursor
+		FROM rewards.plaid_items
+		WHERE id = $1
+	`, itemID).Scan(&cursor)
+
+	return cursor, err
+}
+
+func UpdateTransactionsCursor(itemID string, cursor string) error {
+	_, err := db.DB.Exec(`
+		UPDATE rewards.plaid_items
+		SET transactions_cursor = $1,
+		    updated_at = NOW()
+		WHERE id = $2
+	`, cursor, itemID)
+
+	return err
+}
