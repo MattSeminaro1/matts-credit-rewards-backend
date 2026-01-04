@@ -34,13 +34,14 @@ func (s *TransactionSyncService) SyncItem(
 	}
 	log.Printf("Using cursor: %v", cursor)
 	for {
+		log.Printf("starting for loop")
 		req := plaid.TransactionsSyncRequest{
 			AccessToken: accessToken,
 		}
 		if cursor != nil {
 			req.Cursor = cursor
 		}
-
+		log.Printf("Created request: %+v", req)
 		resp, _, err := s.PlaidClient.PlaidApi.
 			TransactionsSync(ctx).
 			TransactionsSyncRequest(req).
@@ -50,8 +51,9 @@ func (s *TransactionSyncService) SyncItem(
 		}
 
 		// Added + Modified
+		log.Printf("starting inner for loop")
 		for _, tx := range append(resp.GetAdded(), resp.GetModified()...) {
-
+			log.Printf("Get Account ID")
 			accountID, err := repository.
 				GetAccountIDByPlaidAccountID(tx.AccountId)
 			if err != nil {
@@ -73,20 +75,23 @@ func (s *TransactionSyncService) SyncItem(
 				IsoCurrencyCode:    tx.IsoCurrencyCode.Get(),
 				Category:           util.CategoryToString(tx.Category),
 			}
-
+			log.Print("inserting transaction")
+			log.Printf("Upserting transaction: %+v", model)
 			if err := repository.UpsertTransaction(model); err != nil {
+				log.Printf("Upsert failed: %v", err)
 				return err
 			}
 		}
 
 		// Removed
+		log.Printf("removing transactions")
 		for _, r := range resp.GetRemoved() {
 			if err := repository.
 				DeleteTransactionByPlaidID(r.TransactionId); err != nil {
 				return err
 			}
 		}
-
+		log.Printf("updating transactions cursor")
 		next := resp.GetNextCursor()
 		if err := repository.
 			UpdateTransactionsCursor(itemID, next); err != nil {
