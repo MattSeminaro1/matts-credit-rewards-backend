@@ -142,9 +142,9 @@ func GetTransactionsByUserAndAccount(
 			t.pending,
 			t.created_at,
 			t.updated_at
-		FROM transactions t
-		JOIN accounts a ON a.id = t.account_id
-		JOIN plaid_items pi ON pi.id = a.item_id
+		FROM rewards.transactions t
+		JOIN rewards.accounts a ON a.id = t.account_id
+		JOIN rewards.plaid_items pi ON pi.id = a.item_id
 		WHERE pi.user_id = $1
 	`
 
