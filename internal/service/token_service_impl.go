@@ -164,6 +164,18 @@ func (s *TokenServiceImpl) ExchangePublicToken(userID string, publicToken string
 		return err
 	}
 
+	log.Printf("Upserted %d accounts for Plaid Item ID: %s", len(accounts), plaidItemID)
+	log.Printf("Transaction Sync starting for Plaid Item ID: %s", plaidItemID)
+	// 🔹 Sync transactions without changing struct
+	txSyncService := NewTransactionSyncService(s.PlaidClient)
+	if err := txSyncService.SyncItem(
+		context.Background(),
+		plaidItemID,
+		accessToken,
+	); err != nil {
+		return err
+	}
+
 	// return accounts to frontend
 	return nil
 }

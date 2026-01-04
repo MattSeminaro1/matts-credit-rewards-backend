@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"matts-credit-rewards-app/backend/internal/models"
 	"matts-credit-rewards-app/backend/internal/repository"
@@ -26,12 +27,12 @@ func (s *TransactionSyncService) SyncItem(
 	itemID string,
 	accessToken string,
 ) error {
-
+	log.Printf("Starting sync for item %s", itemID)
 	cursor, err := repository.GetTransactionsCursor(itemID)
 	if err != nil {
 		return err
 	}
-
+	log.Printf("Using cursor: %v", cursor)
 	for {
 		req := plaid.TransactionsSyncRequest{
 			AccessToken: accessToken,
